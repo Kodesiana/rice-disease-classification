@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Button, Container, FileButton, Flex, Grid, Image, LoadingOverlay, Tabs, Text, Title } from "@mantine/core";
-import { BarChart, Bar, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { IconPhoto, IconPhotoFilled, IconPhotoHexagon } from '@tabler/icons-react';
+import { BarChart } from '@mantine/charts';
 
 import * as utils from './ml/utils'
 import * as predictor from './ml/predict'
@@ -36,7 +36,7 @@ export default function App() {
   const [originalImage, setOriginalImage] = useState(null);
   const [superimposedImage, setSuperimposedImage] = useState(null);
   const [clippedImage, setClippedImage] = useState(null);
-  const [chartProba, setChartProba] = useState(null);
+  const [chartProba, setChartProba] = useState([]);
   const [threshold, setThreshold] = useState(0);
 
   async function upload(uploadedImage) {
@@ -113,29 +113,26 @@ export default function App() {
           <Text mt="xs">Sample images:</Text>
           <Flex gap="sm" wrap="wrap">
             {SAMPLE_IMAGES.map(url => (
-              <Image key={url} className={styles.image_thumbnails} src={url} onClick={() => upload(url)} />
+              <Image key={url} w={47} h={47} src={url} onClick={() => upload(url)} />
             ))}
           </Flex>
 
           {/* Classification results */}
           <Title order={4} mt="lg">Classification results</Title>
           <Text mb="sm">Threshold: {threshold.toFixed(4)}</Text>
-          <div className={styles.container_chart}>
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={chartProba} layout='vertical' margin={{ left: 20, right: 20, bottom: 20 }}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis type="number" label={{ value: 'Probability %', position: "bottom" }} />
-                <YAxis dataKey="category" type='category' />
-                <Tooltip formatter={x => x.toFixed(2) + "%"} />
-
-                <Bar dataKey="probability">
-                  {chartProba && chartProba.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.highest ? '#8884d8' : '#82ca9d'} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
+            <BarChart 
+              h={200}
+              orientation="vertical"
+              withTooltip={false}
+              data={chartProba} 
+              dataKey='category'
+              series={[{name: "probability", color: 'blue'}]}
+              valueFormatter={(value) => new Intl.NumberFormat('en-US').format(value)}
+              withBarValueLabel
+              xAxisLabel='Probability %' 
+              yAxisLabel='Category' 
+              yAxisProps={{ width: 80 }}
+              m={{ left: 20, right: 20, bottom: 20 }} />
         </Grid.Col>
 
         {/* Image preview */}
@@ -155,7 +152,7 @@ export default function App() {
             </Tabs.List>
 
             <Tabs.Panel value="original" p="md">
-              <Image radius="md" className={styles.image_original} src={originalImage} ref={originalImageRef} onLoad={predict} />
+              <Image radius="md" src={originalImage} className={styles.image_original} ref={originalImageRef} onLoad={predict} />
             </Tabs.Panel>
             <Tabs.Panel value="superimposed" p="md">
               <Image radius="md" src={superimposedImage} />
